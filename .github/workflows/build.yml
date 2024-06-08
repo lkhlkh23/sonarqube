@@ -1,36 +1,51 @@
-name: Build
+name: Code Analyze branch
+
+# then define on which event, here a push
 on:
   push:
+    # and the target with some regex to match our specific  branch names
     branches:
-      - main # the name of your main branch
-  pull_request:
-    types: [opened, synchronize, reopened]
+      - master
+      - develop
+      - main
+
+# We can now build our job
 jobs:
-  build:
-    name: Build
+  code_analysis:
+
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
+      - name: 'Checkout repository on branch: ${{ github.REF }}'
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: Set up JDK 17
-        uses: actions/setup-java@v1
+          ref: ${{ github.REF }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          java-version: 17
-      - name: Cache SonarQube packages
-        uses: actions/cache@v1
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        id: npm-cache
         with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-      - name: Cache Gradle packages
-        uses: actions/cache@v1
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-gradle
-      - name: Build and analyze
+          path: '**/node_modules'
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: npm install
+
+      - name: Coverage Test
+        continue-on-error: true
+        run: npm run coverage
+
+      - name: 'Run an analysis of the ${{ github.REF }} branch'
+        uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: ./gradlew build sonar --warning-mode all
+          SONAR_HOST_URL: ${{ secrets.SONAR_URL }}

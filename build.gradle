@@ -7,10 +7,11 @@ plugins {
 
 sonar {
 	properties {
-		property "sonar.projectKey", "lkhlkh23_sonarqube_bc8152e1-196b-4b23-9073-7f9e248cdb81"
+		property "sonar.projectKey", "lkhlkh23_sonarqube_e8e4e6d6-52b6-45a6-bb25-e295e6fd2996"
 		property "sonar.projectName", "sonarqube"
 	}
 }
+
 
 group = 'sonarqube'
 version = '0.0.1-SNAPSHOT'

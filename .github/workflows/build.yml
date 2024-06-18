@@ -1,51 +1,31 @@
-name: Code Analyze branch
+name: sonar-push
 
-# then define on which event, here a push
 on:
   push:
-    # and the target with some regex to match our specific  branch names
     branches:
-      - master
-      - develop
       - main
+  workflow_dispatch:
 
-# We can now build our job
 jobs:
-  code_analysis:
-
-    runs-on: ubuntu-latest
-
+  sonar-push:
+    runs-on: default
     steps:
-      - name: 'Checkout repository on branch: ${{ github.REF }}'
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3.0.2
+      - name: Set up JDK
+        uses: actions/setup-java@v3
         with:
-          ref: ${{ github.REF }}
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Cache node modules
-        uses: actions/cache@v3
-        id: npm-cache
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install Dependencies
-        if: steps.npm-cache.outputs.cache-hit != 'true'
-        run: npm install
-
-      - name: Coverage Test
-        continue-on-error: true
-        run: npm run coverage
-
-      - name: 'Run an analysis of the ${{ github.REF }} branch'
-        uses: sonarsource/sonarqube-scan-action@master
+          distribution: zulu
+          java-version: 17
+          cache: 'gradle'
+      - name: generate application test report
+        run: |
+          ./gradlew test --parallel
+      - name: Build and analyze
         env:
+          # PR 추적도 한다면(Developer Edition) 추가할 수 있습니다...
+          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_URL }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          ./gradlew sonar -Dorg.gradle.jvmargs=-Xmx4g -Pversion=${GITHUB_SHA} --parallel

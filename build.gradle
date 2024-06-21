@@ -2,16 +2,15 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.3.0'
 	id 'io.spring.dependency-management' version '1.1.5'
-	id "org.sonarqube" version "4.0.0.2929"
+	id "org.sonarqube" version "5.0.0.4638"
 }
 
 sonar {
 	properties {
-		property "sonar.projectKey", "lkhlkh23_sonarqube_e8e4e6d6-52b6-45a6-bb25-e295e6fd2996"
+		property "sonar.projectKey", "lkhlkh23_sonarqube_33fd8600-fbce-4e37-96ab-a2963070b791"
 		property "sonar.projectName", "sonarqube"
 	}
 }
-
 
 group = 'sonarqube'
 version = '0.0.1-SNAPSHOT'
